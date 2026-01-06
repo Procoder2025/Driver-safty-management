@@ -1,0 +1,437 @@
+<?php
+session_start();
+if (!isset($_SESSION["user"])) {
+    header("Location: login.html");
+    exit();
+}
+?>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveXight Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial',sans-serif;
+        }
+        body {
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            background: #f8f9fa;
+            color: #333;
+        }
+        .accident-container {
+            background: #eef7ff;
+            padding: 20px;
+            width: 400px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .accident-box {
+            border: 2px solid #008cff;
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .accident-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            margin-bottom: 25px;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .blue-text {
+            color: #008cff;
+        }
+
+        .download-btn {
+            background: #008cff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            transition: 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #0071e3;
+        }
+
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #f8f9f9;
+            height: 110vh;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            color: rgb(9, 9, 9);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .menu-item {
+            padding: 15px;
+            margin: 8px 0;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            
+        }
+
+        .menu-item:hover, .active {
+            font-weight: bold;
+        }
+
+        .menu-item.settings {
+            margin-top: 90%; /* Push Settings above Logout */
+        }
+
+        .logout {
+            margin-top: auto;
+            color: red;
+        }
+
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 40px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .search-box {
+            flex: 1;
+            margin: 0 30px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .notification {
+            position: relative;
+            cursor: pointer;
+            font-size: 22px;
+            margin-right: 20px;
+        }
+
+        .notification .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            font-size: 12px;
+            border-radius: 50%;
+            padding: 4px 7px;
+        }
+
+        .notification-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 40px;
+            width: 250px;
+            background: white;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .notification:hover .notification-menu {
+            display: block;
+        }
+
+        .notification-menu p {
+            font-size: 14px;
+            margin: 5px 0;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: gray;
+        }
+
+        .content {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 280px;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .accident-card {
+            border-left: 7px solid #2563eb;
+        }
+
+        .download-btn {
+            background: #2563eb;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo"><br>
+            <br>
+            <img src="png.png" alt="DriveXight Logo">
+        </div>
+        <a href="user_dashboard.html" class="menu-item active">🏠 Dashboard</a>
+        <a href="accident_reports.html" class="menu-item">📄 Accident Reports</a>
+        <a href="Driver Behavior Analytics.html" class="menu-item">📊 Driver Behavior</a>
+        <a href="fradu.html" class="menu-item">🛡️ Fraud Detection</a>
+        <a href="Live GPS Tracking.html" class="menu-item">📍 Live GPS Tracking</a>
+        <a href="settings.php" class="menu-item settings">⚙️ Settings</a>
+        <a href="logout.php" class="menu-item logout">🔴 Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Header -->
+        <div class="header">
+            <input type="text" class="search-box" placeholder="Search...">
+            <div class="notification">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+                <div class="notification-menu">
+                    <p>New accident report generated</p>
+                    <p>Driver behavior updated</p>
+                    <p>Insurance fraud alert detected</p>
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-img"></div>
+                <div>Smrithi <br> User</div>
+            </div>
+        </div>
+
+        <h3>Hey, Jeevan</h3>
+        <br>
+
+        <div class="content">
+            <!-- Live Accident Reports -->
+            <div class="card accident-card">
+                     <p class="accident-title">Real-Time Accident Alerts</p>
+
+        <div class="accident-box">
+            <div class="info-row">
+                <div>
+                    <p class="label">Timestamp & Location</p>
+                    <p class="blue-text">02:18:25 pm</p>
+                    <p class="blue-text">Hosur</p>
+                </div>
+                <div>
+                    <p class="label">Severity Level</p>
+                    <p class="blue-text">Minor</p>
+                </div>
+            </div>
+
+            <div class="info-row" style="justify-content: center;">
+                <div>
+                    <p class="label">Vehicle Info</p>
+                    <p class="blue-text">TN70AP1332</p>
+                    <p class="blue-text">Car</p>
+                </div>
+            </div>
+
+            <button class="download-btn" onclick="downloadReport()">Download</button>
+        </div>
+    </div>
+
+            <!-- Driver Behavior Analytics -->
+            <div class="card">
+                <h3>Driver Behavior Analytics</h3>
+                <canvas id="behaviorChart"></canvas>
+            </div>
+        </div>
+            <br>
+        <h3>Fraud Detection Status</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Incident ID</th>
+                    <th>Vehicle Info</th>
+                    <th>Reason Flagging</th>
+                    <th>Verification Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>101</td>
+                    <td>TN70AP1332</td>
+                    <td>No Impact</td>
+                    <td style="color: green;">Verified</td>
+                </tr>
+                <tr>
+                    <td>102</td>
+                    <td>TN70AP1332</td>
+                    <td>No Impact</td>
+                    <td style="color: green;">Verified</td>
+                </tr>
+                <tr>
+                    <td>103</td>
+                    <td>TN70AP1332</td>
+                    <td>No Impact</td>
+                    <td style="color: green;">Verified</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- JavaScript for Chart -->
+    <script>
+         function downloadReport() {
+            alert("Downloading Accident Report...");
+        }
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('behaviorChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Speed Violations',
+                            data: [5, 7, 6, 4, 3, 2, 8],
+                            borderColor: 'red',
+                            fill: false
+                        },
+                        {
+                            label: 'Harsh Braking',
+                            data: [2, 3, 1, 0, 2, 4, 5],
+                            borderColor: 'blue',
+                            fill: false
+                        },
+                        {
+                            label: 'Distraction Alerts',
+                            data: [3, 5, 2, 4, 1, 0, 6],
+                            borderColor: 'orange',
+                            fill: false
+                        }
+                        
+                    ]
+                }
+            });
+        });
+        
+    </script>
+
+</body>
+</html>
+
+
+
+
+
+
